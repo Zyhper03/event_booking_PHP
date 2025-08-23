@@ -2,9 +2,9 @@
 session_start();
 require '../includes/db.php';
 
-if (!isset($_SESSION['admin_id'])) {
-    header('Location: login.php');
-    exit();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    header("Location: ../login.php");
+    exit;
 }
 
 $eventId = $_GET['id'] ?? null;

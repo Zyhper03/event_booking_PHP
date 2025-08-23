@@ -1,12 +1,15 @@
 <?php
 require 'includes/db.php';
 
+// Define admin credentials
 $name = 'Admin';
 $email = 'admin@example.com';
 $password = password_hash('admin123', PASSWORD_DEFAULT);
+$role = 'admin';
 
-$stmt = $pdo->prepare("INSERT INTO admins (name, email, password) VALUES (?, ?, ?)");
-$stmt->execute([$name, $email, $password]);
+// Insert admin into users table
+$stmt = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
+$stmt->execute([$name, $email, $password, $role]);
 
-echo "Admin created.";
+echo "Admin account created successfully!";
 ?>

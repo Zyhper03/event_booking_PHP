@@ -1,62 +1,77 @@
 <?php
+session_start();
 require 'includes/db.php';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name     = trim($_POST['name']);
-    $email    = trim($_POST['email']);
-    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+$error = "";
+$success = "";
 
-    try {
-        $stmt = $pdo->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-        $stmt->execute([$name, $email, $password]);
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
+    $password = $_POST['password'];
+    $confirmPassword = $_POST['confirm_password'];
 
-        // ✅ Redirect user to index with guide message
-        header("Location: index.php?registered=1");
-        exit();
-    } catch (PDOException $e) {
-        $error = "Email already exists or invalid input.";
+    if (empty($name) || empty($email) || empty($password) || empty($confirmPassword)) {
+        $error = "All fields are required.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email format.";
+    } elseif ($password !== $confirmPassword) {
+        $error = "Passwords do not match.";
+    } else {
+        // Check if email exists
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        if ($stmt->rowCount() > 0) {
+            $error = "Email is already registered.";
+        } else {
+            // Insert user with default role = 'user'
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+            $stmt = $pdo->prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'user')");
+            $stmt->execute([$name, $email, $hashedPassword]);
+
+            $success = "Registration successful! <a href='login.php'>Login here</a>.";
+        }
     }
 }
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register - The Nextup Network</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <title>Register</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <nav class="navbar">
-    <div class="container">
-      <a href="index.php" class="logo">The Nextup Network</a>
-    </div>
-  </nav>
+  <div class="container" style="max-width: 400px; margin: 5rem auto;">
+    <h2>Register</h2>
+    <?php if ($error): ?>
+      <p style="color: red;"><?= htmlspecialchars($error) ?></p>
+    <?php endif; ?>
+    <?php if ($success): ?>
+      <p style="color: green;"><?= $success ?></p>
+    <?php endif; ?>
 
-  <section class="contact-page">
-    <div class="container">
-      <h1>Register</h1>
-      <?php if (!empty($error)) echo "<p style='color:red;'>$error</p>"; ?>
-      <?php if (!empty($success)) echo "<p style='color:green;'>$success</p>"; ?>
-
-      <form method="POST" class="contact-form">
-        <div class="form-group">
-          <label>Name</label>
-          <input type="text" name="name" placeholder="anish" required />
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" name="email" placeholder="email@" required />
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" name="password" placeholder="gsd4356" required />
-        </div>
-        <button type="submit" class="button-primary">Register</button>
-      </form>
-    </div>
-  </section>
+    <form method="POST" action="register.php">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="name" required>
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" name="email" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" name="confirm_password" required>
+      </div>
+      <button type="submit" class="button-primary">Register</button>
+    </form>
+  </div>
 </body>
 </html>

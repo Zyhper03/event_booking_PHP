@@ -7,16 +7,15 @@ require_once 'includes/db.php';
 // Fetch user data if logged in
 $userData = null;
 if (isset($_SESSION['user_id'])) {
-    $stmt = $pdo->prepare("SELECT name, email FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT name, email, role FROM users WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $userData = $stmt->fetch(PDO::FETCH_ASSOC);
 
     // Store in session if not already
-    if (!isset($_SESSION['user_name'])) {
-        $_SESSION['user_name'] = $userData['name'] ?? 'User';
-    }
-    if (!isset($_SESSION['user_email'])) {
-        $_SESSION['user_email'] = $userData['email'] ?? 'user@example.com';
+    if ($userData) {
+        $_SESSION['user_name'] = $userData['name'];
+        $_SESSION['user_email'] = $userData['email'];
+        $_SESSION['role'] = $userData['role'];
     }
 }
 ?>
@@ -46,8 +45,14 @@ if (isset($_SESSION['user_id'])) {
             <strong><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'User'); ?></strong><br>
             <small><?php echo htmlspecialchars($_SESSION['user_email'] ?? 'user@example.com'); ?></small>
             <hr>
-            <a href="my-bookings.php">My Bookings</a>
-            <a href="logout.php">Logout</a>
+            <?php if ($_SESSION['role'] === 'admin'): ?>
+              <a href="admin/admin-dashboard.php">Admin Dashboard</a>
+              <a href="admin/add-event.php">Add Event</a>
+              <a href="admin/contact-submissions.php">Contact Messages</a>
+            <?php else: ?>
+              <a href="my-bookings.php">My Bookings</a>
+            <?php endif; ?>
+            <a href="/event-booking/logout.php">Logout</a>
           </div>
         </div>
       <?php else: ?>

@@ -1,7 +1,15 @@
 <?php
 session_start();
+session_unset();
 session_destroy();
+
+// Redirect to home page after logout
+header("Location: index.php");
+exit;
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
